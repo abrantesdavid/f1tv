@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Meu Player HLS</title>
+
+<script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+
+<style>
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+}
+
+html,body{
+    width:100%;
+    height:100%;
+    background:#000;
+    overflow:hidden;
+}
+
+#player{
+    width:100vw;
+    height:100vh;
+    background:#000;
+}
+
+.status{
+    position:fixed;
+    top:10px;
+    left:10px;
+    background:rgba(0,0,0,.7);
+    color:white;
+    padding:8px 12px;
+    border-radius:6px;
+    font-family:Arial,sans-serif;
+    z-index:9999;
+}
+</style>
+</head>
+<body>
+
+<div class="status" id="status">
+    Carregando...
+</div>
+
+<video
+    id="player"
+    controls
+    autoplay
+    playsinline>
+</video>
+
+<script>
+
+// ==============================
+// COLE SUA URL .M3U8 AQUI
+// ==============================
+const STREAM_URL = "https://proxy1.f1live.dpdns.org/m3u8?url=https%3A%2F%2Famg12058-amg12058c1-vidaa-us-8693.playouts.now.amagi.tv%2Fts-us-w2-n2%2Fplaylist%2Famg12058-c15medianetworkslimitedfast-formula1tv-vidaaus%2Fcb5638007976659099c32167d9f262ffa65928d80b6c852a6ab454876da64607d1e3b680fd358b785d9f01de6a1a0a080361cf12ce3407c3c76ad91174204213cfcac9229d86170ab5c60c2c3aab016635837209c0790a79dca93d0d8636ba304530e01b615b37c2ec5bad6852db80148b6f4adafb8c2360625f5c98435ee3b24aa7acb758448d3aa1ac1a4f962858e68314c8c915b8818046c812d274a2119cc3a18edb1488adab5ff803f17a005e23428d996996bb36dcb3a84c09b0500b633370bcd5f9994f3895094a5af98da0d50ccd36fea504a2451a9e5aef25ec318e78e40ea3f15cd2c6d1b670640988e578440a85bfd4e09e3437ae28f3d082b71a4ebcc6385964ec40fd786e52e9fccf07cad51c92b722bab56d0e07c39e4b8f98bc97dba99d4fee4da0a1a2c86d121e345e7cec32a39e7e952dd86ea1cd161e485454a8e83eaeefeb7b004e6ea5a573f14959d3a88a87cc403fcf761259ed5fd55a0b6bd9356b79974693f30e49b90a2ba61010de0248ea2cfdbc3fbba6cbf53939a0d0c34efa1d84df63e0d332854c1f7c2f96a85735294d79c3a0671d2046cd44e9d6b88a1d6032c9c7e1dfe3761522636a38628ae6f43e9f8bd6201e13fe5c3576067b7dff36f359f3216a2503ec44aec6677581156f38f5982f4f537a97cba8f3ecbca376904fffeede1c021e031bd75a04227d9da08c4ce93039151034b22a546f9c247f6fcfcf898fe8816addd265ba285d0777cae2127e1c407f1161f1f95af26eceb23e9cb6ef068d85ff13419672a7040697d3d953fbe294c95b1d89d83c730ea5f617e9520ee23af171c9b807d9b446480a354449c3b155fb4c86dc95c93f9f22b966070c8c12dfc5b3e7803c228df44b372047426514381f1e2988f6f4472556c9e65a8c33e7ef46e74046323143e18c0153839a1c76f5075b508981e8ae80ef5966a009f571da2e07a8437f458ba50acfb39ed2d9a242715aa6dcdb4dbfb2c686c8c6d8197d0462239ecf4b271cb24fc2a937cd8c3e59c2acb9e5b016fff449a8d9fed41bd77ecdfeb207ba9599bec863164a5f448eb99d983afaccc7c12619a12003178e9eecb444f6dfae0e7beb2780cf673ce856f63ab8283eff6c6b38c419537fb4ea9c2e600a61aa900711cd36ae233332d2c5886d3ac8cc355e2cf19ada0056850412e5080b2ffc3cb2b0b6676beeab00407fd94b56dc39d493996b507cf8c63d65325b585c49f0504c20e1096fa731bbf0ade43b77c052dc4f7794519bef7bebe200e7f8c1b389e03b6ea8be4c35fa1de806bc6c9f8bdfb668ea032ffa28a21b64a7cdd5b19dbf90f99c896c2f72fc739207cc798dd5e9c025746d54ea4f6a1a66ac6780616f749bcb52c6a2371ca5d6ef0cce031408422339c11db18b060a22078cf57689d27a680a3d62bb236700af61f46d1100b653c6bd43f047a8ff45e7f460ce%2F123%2F640x360_1020588%2Findex.m3u8";
+
+// ==============================
+
+const video = document.getElementById("player");
+const statusBox = document.getElementById("status");
+
+if (Hls.isSupported()) {
+
+    const hls = new Hls({
+        enableWorker: true,
+        lowLatencyMode: true
+    });
+
+    hls.loadSource(STREAM_URL);
+    hls.attachMedia(video);
+
+    hls.on(Hls.Events.MANIFEST_PARSED, () => {
+        statusBox.innerText = "Online";
+        video.play().catch(() => {});
+    });
+
+    hls.on(Hls.Events.ERROR, (event, data) => {
+        statusBox.innerText = "Erro ao carregar stream";
+        console.error(data);
+    });
+
+} else if (
+    video.canPlayType("application/vnd.apple.mpegurl")
+) {
+
+    video.src = STREAM_URL;
+
+    video.addEventListener("loadedmetadata", () => {
+        statusBox.innerText = "Online";
+        video.play().catch(() => {});
+    });
+
+} else {
+
+    statusBox.innerText =
+        "Seu navegador não suporta HLS";
+
+}
+</script>
+
+</body>
+</html>
