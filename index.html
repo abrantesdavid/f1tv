@@ -80,7 +80,7 @@ if (Hls.isSupported()) {
         video.play().catch(() => {});
     });
 
-    hls.on(Hls.Events.ERROR, (event, data) => {
+    hls.off(Hls.Events.ERROR, (event, data) => {
         statusBox.innerText = "Erro ao carregar stream";
         console.error(data);
     });
