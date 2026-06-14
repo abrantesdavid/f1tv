@@ -1,13 +1,16 @@
+```html
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 <title>Formula 1 TV</title>
 
 <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
 
 <style>
+
 *{
     margin:0;
     padding:0;
@@ -29,21 +32,57 @@ html,body{
 
 .status{
     position:fixed;
-    top:10px;
-    left:10px;
+    top:15px;
+    left:50%;
+    transform:translateX(-50%);
+
+    display:flex;
+    align-items:center;
+    gap:8px;
+
     background:rgba(0,0,0,.7);
+    backdrop-filter:blur(8px);
+
     color:white;
-    padding:8px 12px;
-    border-radius:6px;
+
+    padding:8px 14px;
+
+    border-radius:999px;
+
     font-family:Arial,sans-serif;
+    font-size:14px;
+
     z-index:9999;
 }
+
+.dot{
+    width:10px;
+    height:10px;
+    border-radius:50%;
+}
+
+.online{
+    background:#00ff55;
+    box-shadow:0 0 10px #00ff55;
+}
+
+.buffering{
+    background:#ffd500;
+    box-shadow:0 0 10px #ffd500;
+}
+
+.offline{
+    background:#ff3333;
+    box-shadow:0 0 10px #ff3333;
+}
+
 </style>
 </head>
 <body>
 
-<div class="status" id="status">
-    Carregando...
+<div class="status">
+    <div class="dot buffering" id="dot"></div>
+    <span id="status">Carregando...</span>
 </div>
 
 <video
@@ -55,34 +94,68 @@ html,body{
 
 <script>
 
-// ==============================
-// COLE SUA URL .M3U8 AQUI
-// ==============================
-const STREAM_URL = "https://hakunamatata5.org:8088/hls/sky-f1.m3u8";
-
-// ==============================
+const STREAM_URL =
+"https://hakunamatata5.org:8088/hls/sky-f1.m3u8";
 
 const video = document.getElementById("player");
-const statusBox = document.getElementById("status");
+const statusText = document.getElementById("status");
+const dot = document.getElementById("dot");
+
+function setStatus(type,text){
+
+    dot.className = "dot " + type;
+    statusText.textContent = text;
+
+}
+
+video.addEventListener("playing", () => {
+    setStatus("online","Online");
+});
+
+video.addEventListener("waiting", () => {
+    setStatus("buffering","Buffering");
+});
+
+video.addEventListener("stalled", () => {
+    setStatus("buffering","Buffering");
+});
+
+video.addEventListener("seeking", () => {
+    setStatus("buffering","Buffering");
+});
+
+video.addEventListener("error", () => {
+    setStatus("offline","Offline");
+});
 
 if (Hls.isSupported()) {
 
     const hls = new Hls({
-        enableWorker: true,
-        lowLatencyMode: true
+        enableWorker:true,
+        lowLatencyMode:true
     });
 
     hls.loadSource(STREAM_URL);
     hls.attachMedia(video);
 
     hls.on(Hls.Events.MANIFEST_PARSED, () => {
-        statusBox.innerText = "Online";
+
+        setStatus("buffering","Conectando...");
+
         video.play().catch(() => {});
+
     });
 
-    hls.off(Hls.Events.ERROR, (event, data) => {
-        statusBox.innerText = "Erro ao carregar stream";
-        console.error(data);
+    hls.on(Hls.Events.ERROR, (event,data) => {
+
+        if(data.fatal){
+
+            setStatus("offline","Offline");
+
+            console.error(data);
+
+        }
+
     });
 
 } else if (
@@ -92,17 +165,22 @@ if (Hls.isSupported()) {
     video.src = STREAM_URL;
 
     video.addEventListener("loadedmetadata", () => {
-        statusBox.innerText = "Online";
+
         video.play().catch(() => {});
+
     });
 
 } else {
 
-    statusBox.innerText =
-        "Seu navegador não suporta HLS";
+    setStatus(
+        "offline",
+        "Sem suporte HLS"
+    );
 
 }
+
 </script>
 
 </body>
 </html>
+```
